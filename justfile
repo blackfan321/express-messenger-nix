@@ -1,43 +1,123 @@
-nix_file := "express.nix"
+program_name := "express"
+package_file := "express.nix"
+readme_file := "README.md"
 
 set quiet := true
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 
-pull_appimage version:
+[private]
+default:
+    @just --choose
+
+[group('linux')]
+pull-appimage version:
   wget2 --force-progress -O "eXpress-{{version}}.AppImage" \
     "https://updates.express.ms/desktop/eXpress-{{version}}.AppImage" >&2
 
   nix hash file "eXpress-{{version}}.AppImage"
 
-get_latest_appimage_version:
+[group('linux')]
+get-latest-appimage-version:
   { wget2 --server-response --max-redirect=0 --spider "https://express.ms/download/appimage" 2>&1 || true; } \
     | rg -o 'eXpress-([0-9]+\.[0-9]+\.[0-9]+)\.AppImage' -r '$1' \
     | head -n1
 
-pull_latest_appimage:
-  just pull_appimage "$(just get_latest_appimage_version)"
+[group('linux')]
+pull-latest-appimage:
+  just pull-appimage "$(just get-latest-appimage-version)"
 
-update_application:
+[group('macos')]
+pull-dmg version:
+  wget2 --force-progress -O "eXpress-{{version}}-arm64.dmg" \
+    "https://updates.express.ms/desktop/eXpress-{{version}}-arm64.dmg" >&2
+
+  nix hash file "eXpress-{{version}}-arm64.dmg"
+
+[group('macos')]
+get-latest-dmg-version:
+  { wget2 --server-response --max-redirect=0 --spider "https://express.ms/download/dmg-arm64" 2>&1 || true; } \
+    | rg -o 'eXpress-([0-9]+\.[0-9]+\.[0-9]+)-arm64\.dmg' -r '$1' \
+    | head -n1
+
+[group('macos')]
+pull-latest-dmg:
+  just pull-dmg "$(just get-latest-dmg-version)"
+
+[group('maintenance')]
+update-application:
   #!/usr/bin/env bash
   set -euo pipefail
 
-  OLD_VERSION="$(rg -m1 -o 'version = "[^"]+"' "{{nix_file}}" | sed 's/version = "\(.*\)"/\1/')"
-  NEW_VERSION="$(just get_latest_appimage_version)"
+  echo -e "Checking for a new {{program_name}} release\n" >&2
 
-  if [[ "$OLD_VERSION" == "$NEW_VERSION" ]]; then
-    echo "Already up to date: $NEW_VERSION"
+  read_version() {
+    sed -n '/^  '"$1"' = {/,/^  };/ s/^    version = "\([^"]*\)".*/\1/p' "{{package_file}}"
+  }
+
+  OLD_LINUX="$(read_version linuxSources)"
+  OLD_DARWIN="$(read_version darwinSources)"
+  NEW_LINUX="$(just get-latest-appimage-version)"
+  NEW_DARWIN="$(just get-latest-dmg-version)"
+
+  LINUX_CHANGED=0
+  DARWIN_CHANGED=0
+  [[ "$OLD_LINUX" != "$NEW_LINUX" ]] && LINUX_CHANGED=1
+  [[ "$OLD_DARWIN" != "$NEW_DARWIN" ]] && DARWIN_CHANGED=1
+
+  if [[ "$LINUX_CHANGED" == 0 && "$DARWIN_CHANGED" == 0 ]]; then
+    echo -e "{{program_name}} is already up to date (linux $NEW_LINUX, darwin $NEW_DARWIN)" >&2
     exit 0
   fi
 
-  HASH="$(just pull_appimage "$NEW_VERSION" | tail -n1)"
+  summary=""
+  if [[ "$LINUX_CHANGED" == 1 ]]; then
+    HASH_X86="$(just pull-appimage "$NEW_LINUX")"
+    summary="linux $OLD_LINUX -> $NEW_LINUX"
+  fi
+  if [[ "$DARWIN_CHANGED" == 1 ]]; then
+    HASH_DARWIN="$(just pull-dmg "$NEW_DARWIN")"
+    if [[ -n "$summary" ]]; then
+      summary+=", "
+    fi
+    summary+="darwin $OLD_DARWIN -> $NEW_DARWIN"
+  fi
 
-  sed -i \
-    -e 's/version = "[^"]*"/version = "'"$NEW_VERSION"'"/' \
-    -e 's|hash = "[^"]*"|hash = "'"$HASH"'"|' \
-    {{nix_file}}
+  echo -e "\nUpdating {{program_name}} ($summary)\n" >&2
+
+  sed_args=()
+  readme_sed_args=()
+  if [[ "$LINUX_CHANGED" == 1 ]]; then
+    sed_args+=(
+      -e '/^  linuxSources = {/,/^  };/ s/version = "[^"]*"/version = "'"$NEW_LINUX"'"/'
+      -e '/x86_64-linux = {/,/^    };/ s|hash = "[^"]*"|hash = "'"$HASH_X86"'"|'
+    )
+    readme_sed_args+=(-e 's|shields.io/badge/linux-[^-]*-|shields.io/badge/linux-'"$NEW_LINUX"'-|')
+  fi
+  if [[ "$DARWIN_CHANGED" == 1 ]]; then
+    sed_args+=(
+      -e '/^  darwinSources = {/,/^  };/ s/version = "[^"]*"/version = "'"$NEW_DARWIN"'"/'
+      -e '/aarch64-darwin = {/,/^    };/ s|hash = "[^"]*"|hash = "'"$HASH_DARWIN"'"|'
+    )
+    readme_sed_args+=(-e 's|shields.io/badge/macOS-[^-]*-|shields.io/badge/macOS-'"$NEW_DARWIN"'-|')
+  fi
+  sed -i "${sed_args[@]}" {{package_file}}
+  sed -i "${readme_sed_args[@]}" {{readme_file}}
 
   just cleanup
-  echo "Updated: $OLD_VERSION -> $NEW_VERSION"
+  echo -e "{{program_name}} successfully updated ($summary)" >&2
 
+[group('maintenance')]
 cleanup:
-  rm -f -- *.AppImage
+  rm -f -- *.AppImage *.dmg
+
+[group('prek')]
+prek-install:
+  nix develop -c prek install
+
+[group('prek')]
+prek-uninstall:
+  nix develop -c prek uninstall
+
+[group('prek')]
+prek-run:
+  nix develop -c prek run --all-files
