@@ -10,16 +10,16 @@ let
   pname = "express";
 
   linuxSources = {
-    version = "3.73.51";
+    version = "3.74.36";
     x86_64-linux = {
-      hash = "sha256-WMhyfKpSwSDuOPQ4g2TtcLzRg71jaGXoa/5bqVqWo6I=";
+      hash = "sha256-ddIcE6iYmJnR32+21X3xikPvj6nKqgSI+E4IBwJ5jdQ=";
     };
   };
 
   darwinSources = {
-    version = "3.73.51";
+    version = "3.74.36";
     aarch64-darwin = {
-      hash = "sha256-jqbimLJD+dsU362NWdYnw8uT/xq15m6CbVT2V4zaUgA=";
+      hash = "sha256-c/7lpSCnlHfiGx9aZKMEY42y4LbjhfL4pxSWzotSVu4=";
     };
   };
 
