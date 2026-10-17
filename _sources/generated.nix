@@ -8,18 +8,18 @@
 {
   express-darwin = {
     pname = "express-darwin";
-    version = "3.74.36";
+    version = "3.75.56";
     src = fetchurl {
-      url = "https://updates.express.ms/desktop/eXpress-3.74.36-arm64.dmg";
-      sha256 = "sha256-c/7lpSCnlHfiGx9aZKMEY42y4LbjhfL4pxSWzotSVu4=";
+      url = "https://updates.express.ms/desktop/eXpress-3.75.56-arm64.dmg";
+      sha256 = "sha256-DpL8KJjsmbbvjUj5E90l42hAQYts1WtpHgiUa5injiQ=";
     };
   };
   express-linux = {
     pname = "express-linux";
-    version = "3.74.36";
+    version = "3.75.56";
     src = fetchurl {
-      url = "https://updates.express.ms/desktop/eXpress-3.74.36.AppImage";
-      sha256 = "sha256-ddIcE6iYmJnR32+21X3xikPvj6nKqgSI+E4IBwJ5jdQ=";
+      url = "https://updates.express.ms/desktop/eXpress-3.75.56.AppImage";
+      sha256 = "sha256-3Ha+vOHwtOZiq62TxqOjxT3pZwHG3Jz6U34T9wSuWTU=";
     };
   };
 }
