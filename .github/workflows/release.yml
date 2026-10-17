@@ -1,4 +1,4 @@
-name: Create GitHub Release
+name: Create GitHub release
 
 on:
   push:
@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   create-release:
+    name: Create release
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
@@ -21,10 +22,10 @@ jobs:
           version=$(jq -r '.["express-linux"].version' _sources/generated.json)
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Create GitHub Release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: v${{ steps.version.outputs.version }}
+          tag_name: ${{ steps.version.outputs.version }}
           name: ${{ steps.version.outputs.version }}
           body: eXpress Messenger ${{ steps.version.outputs.version }}
           target_commitish: main

@@ -136,10 +136,10 @@ PR body is the `nvfetcher` changelog.
 **Trigger:** push to `main` when `_sources/generated.json` changes
 
 **What it does:**
-- Creates a GitHub Release `vX.Y.Z`
+- Creates a GitHub Release `X.Y.Z`
 
 Example release:
 
-- **Tag:** `v3.75.56`
+- **Tag:** `3.75.56`
 - **Name:** `3.75.56`
 - **Notes:** `eXpress Messenger 3.75.56`
