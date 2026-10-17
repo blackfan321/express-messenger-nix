@@ -1,0 +1,9 @@
+[express-linux]
+src.webpage = "https://updates.express.ms/desktop/latest-linux.yml"
+src.regex = "version: ([0-9]+\\.[0-9]+\\.[0-9]+)"
+fetch.url = "https://updates.express.ms/desktop/eXpress-$ver.AppImage"
+
+[express-darwin]
+src.webpage = "https://updates.express.ms/desktop/latest-mac.yml"
+src.regex = "version: ([0-9]+\\.[0-9]+\\.[0-9]+)"
+fetch.url = "https://updates.express.ms/desktop/eXpress-$ver-arm64.dmg"

@@ -7,8 +7,7 @@
         buildInputs = [
           pkgs.gnused
           pkgs.just
-          pkgs.ripgrep
-          pkgs.wget2
+          pkgs.nvfetcher
         ]
         ++ config.checks.prek.enabledPackages;
       };

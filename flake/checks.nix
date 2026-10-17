@@ -7,14 +7,22 @@
         src = inputs.self;
         package = pkgs.prek;
         hooks = {
-          nixfmt.enable = true;
-          nixfmt.priority = 1;
+          nixfmt = {
+            enable = true;
+            priority = 1;
+          };
 
-          deadnix.enable = true;
-          deadnix.priority = 2;
+          deadnix = {
+            enable = true;
+            priority = 2;
+            # nvfetcher always emits unused fetcher args in generated.nix
+            excludes = [ "_sources/generated.nix" ];
+          };
 
-          statix.enable = true;
-          statix.priority = 3;
+          statix = {
+            enable = true;
+            priority = 3;
+          };
         };
       };
     in

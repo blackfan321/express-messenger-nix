@@ -3,30 +3,28 @@
   stdenv,
   appimageTools,
   fetchurl,
+  fetchgit,
+  fetchFromGitHub,
+  dockerTools,
+  undmg,
   ...
 }:
 
 let
-  pname = "express";
-
-  linuxSources = {
-    version = "3.74.36";
-    x86_64-linux = {
-      hash = "sha256-ddIcE6iYmJnR32+21X3xikPvj6nKqgSI+E4IBwJ5jdQ=";
-    };
-  };
-
-  darwinSources = {
-    version = "3.74.36";
-    aarch64-darwin = {
-      hash = "sha256-c/7lpSCnlHfiGx9aZKMEY42y4LbjhfL4pxSWzotSVu4=";
-    };
-  };
+  inherit (import ./flake/systems.nix) systems;
 
   system = stdenv.hostPlatform.system;
 
-  platformNames =
-    sources: lib.filter (name: lib.isAttrs sources.${name}) (builtins.attrNames sources);
+  sources = import ./_sources/generated.nix {
+    inherit
+      fetchgit
+      fetchurl
+      fetchFromGitHub
+      dockerTools
+      ;
+  };
+
+  pname = "express";
 
   meta = with lib; {
     description = "eXpress Messenger";
@@ -38,17 +36,14 @@ let
     downloadPage = "https://express.ms/download/#web-desktop";
     license = licenses.unfree;
     maintainers = with maintainers; [ blackfan321 ];
-    platforms = platformNames linuxSources ++ platformNames darwinSources;
+    platforms = systems;
   };
 in
-if stdenv.hostPlatform.isLinux then
+if !(lib.elem system systems) then
+  throw "Unsupported system: ${system}"
+else if stdenv.hostPlatform.isLinux then
   let
-    source = linuxSources.${system} or (throw "Unsupported system: ${system}");
-    inherit (linuxSources) version;
-    src = fetchurl {
-      url = "https://updates.express.ms/desktop/eXpress-${version}.AppImage";
-      inherit (source) hash;
-    };
+    inherit (sources.express-linux) version src;
     appimageContents = appimageTools.extract {
       inherit pname src version;
     };
@@ -66,48 +61,31 @@ if stdenv.hostPlatform.isLinux then
       inherit pname appimageContents;
     };
   }
-else if stdenv.hostPlatform.isDarwin then
+else
   let
-    source = darwinSources.${system} or (throw "Unsupported system: ${system}");
-    inherit (darwinSources) version;
+    inherit (sources.express-darwin) version src;
   in
   stdenv.mkDerivation {
-    inherit pname meta version;
+    inherit
+      pname
+      meta
+      version
+      src
+      ;
 
-    src = fetchurl {
-      url = "https://updates.express.ms/desktop/eXpress-${version}-arm64.dmg";
-      inherit (source) hash;
-    };
-
-    # hdiutil lives outside the Nix sandbox.
-    __noChroot = true;
+    nativeBuildInputs = [ undmg ];
 
     dontBuild = true;
     dontFixup = true;
 
     sourceRoot = "eXpress.app";
 
-    unpackPhase = ''
-      runHook preUnpack
-
-      tmp=$(mktemp -d)
-      /usr/bin/hdiutil attach "$src" -mountpoint "$tmp" -nobrowse -quiet
-      app=$(find "$tmp" -maxdepth 2 -name 'eXpress.app' -type d | head -n1)
-      cp -R "$app" ./eXpress.app
-      /usr/bin/hdiutil detach "$tmp" -quiet
-      rm -rf "$tmp"
-
-      runHook postUnpack
-    '';
-
     installPhase = ''
       runHook preInstall
 
-      mkdir -p "$out/Applications/eXpress.app"
-      cp -R Contents "$out/Applications/eXpress.app/"
+      mkdir -p "$out/Applications"
+      cp -R . "$out/Applications/eXpress.app"
 
       runHook postInstall
     '';
   }
-else
-  throw "Unsupported system: ${system}"

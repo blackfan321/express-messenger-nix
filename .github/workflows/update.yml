@@ -12,14 +12,6 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - program_name: express
-            package_file: express.nix
-            readme_file: README.md
-            recipe: update-application
     steps:
       - uses: actions/checkout@v5
 
@@ -27,54 +19,31 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Read current versions
-        id: before
-        run: |
-          linux="$(sed -n '/^  linuxSources = {/,/^  };/ s/^    version = "\([^"]*\)".*/\1/p' "${{ matrix.package_file }}")"
-          darwin="$(sed -n '/^  darwinSources = {/,/^  };/ s/^    version = "\([^"]*\)".*/\1/p' "${{ matrix.package_file }}")"
-          echo "linux=$linux" >> "$GITHUB_OUTPUT"
-          echo "darwin=$darwin" >> "$GITHUB_OUTPUT"
+      - name: Update application
+        run: nix develop -c just update-application
 
-      - name: Check for a new release
-        run: nix develop -c just ${{ matrix.recipe }}
-
-      - name: Describe update
-        id: update
+      - name: Read changelog
+        id: changelog
         run: |
-          set -euo pipefail
-          linux="$(sed -n '/^  linuxSources = {/,/^  };/ s/^    version = "\([^"]*\)".*/\1/p' "${{ matrix.package_file }}")"
-          darwin="$(sed -n '/^  darwinSources = {/,/^  };/ s/^    version = "\([^"]*\)".*/\1/p' "${{ matrix.package_file }}")"
-          summary=""
-          branch_suffix=""
-          if [[ "$linux" != "${{ steps.before.outputs.linux }}" ]]; then
-            summary="linux ${{ steps.before.outputs.linux }} -> $linux"
-            branch_suffix="linux-$linux"
+          if [[ -s .nvfetcher-changelog ]]; then
+            {
+              echo 'body<<EOF'
+              cat .nvfetcher-changelog
+              echo EOF
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo 'body=unchanged' >> "$GITHUB_OUTPUT"
           fi
-          if [[ "$darwin" != "${{ steps.before.outputs.darwin }}" ]]; then
-            if [[ -n "$summary" ]]; then
-              summary+=", darwin ${{ steps.before.outputs.darwin }} -> $darwin"
-              branch_suffix+="-darwin-$darwin"
-            else
-              summary="darwin ${{ steps.before.outputs.darwin }} -> $darwin"
-              branch_suffix="darwin-$darwin"
-            fi
-          fi
-          if [[ -z "$branch_suffix" ]]; then
-            summary="unchanged"
-            branch_suffix="unchanged"
-          fi
-          echo "summary=$summary" >> "$GITHUB_OUTPUT"
-          echo "branch_suffix=$branch_suffix" >> "$GITHUB_OUTPUT"
 
       - name: Open pull request
         uses: peter-evans/create-pull-request@v8
         with:
-          commit-message: "update ${{ matrix.program_name }}: ${{ steps.update.outputs.summary }}"
-          title: "update ${{ matrix.program_name }}: ${{ steps.update.outputs.summary }}"
-          body: |
-            update ${{ matrix.program_name }}: ${{ steps.update.outputs.summary }}
-          branch: update-${{ matrix.program_name }}-${{ steps.update.outputs.branch_suffix }}
+          commit-message: ${{ steps.changelog.outputs.body }}
+          title: ${{ steps.changelog.outputs.body }}
+          body: ${{ steps.changelog.outputs.body }}
+          branch: chore/update-express
           add-paths: |
-            ${{ matrix.package_file }}
-            ${{ matrix.readme_file }}
+            _sources/generated.nix
+            _sources/generated.json
+            README.md
           delete-branch: true
