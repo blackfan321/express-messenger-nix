@@ -8,11 +8,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-DpL8KJjsmbbvjUj5E90l42hAQYts1WtpHgiUa5injiQ=",
+            "sha256": "sha256-5XTh4jCMvnT1hxzDUt2azCLGzORm1AtbaAsUvoP5Zr4=",
             "type": "url",
-            "url": "https://updates.express.ms/desktop/eXpress-3.75.56-arm64.dmg"
+            "url": "https://updates.express.ms/desktop/eXpress-3.76.74-arm64.dmg"
         },
-        "version": "3.75.56"
+        "version": "3.76.74"
     },
     "express-linux": {
         "cargoLock": null,
@@ -23,10 +23,10 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-3Ha+vOHwtOZiq62TxqOjxT3pZwHG3Jz6U34T9wSuWTU=",
+            "sha256": "sha256-6o4E63uankODs7ep1WjDJmfH289DLQdK4MDdKyfwL8M=",
             "type": "url",
-            "url": "https://updates.express.ms/desktop/eXpress-3.75.56.AppImage"
+            "url": "https://updates.express.ms/desktop/eXpress-3.76.74.AppImage"
         },
-        "version": "3.75.56"
+        "version": "3.76.74"
     }
 }
