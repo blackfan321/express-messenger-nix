@@ -3,8 +3,8 @@
 Nix flake for [eXpress Messenger](https://express.ms/).
 Repackages the official Linux and macOS builds.
 
-[![linux](https://img.shields.io/badge/linux-3.75.56-informational)](./_sources/generated.nix)
-[![macOS](https://img.shields.io/badge/macOS-3.75.56-informational)](./_sources/generated.nix)
+[![linux](https://img.shields.io/badge/linux-3.76.74-informational)](./_sources/generated.nix)
+[![macOS](https://img.shields.io/badge/macOS-3.76.74-informational)](./_sources/generated.nix)
 [![CI](https://img.shields.io/github/actions/workflow/status/blackfan321/express-messenger-nix/auto-updates.yml?label=CI)](https://github.com/blackfan321/express-messenger-nix/actions/workflows/auto-updates.yml)
 
 ## Quick Start
